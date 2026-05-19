@@ -6,6 +6,7 @@ import {
   scrollToDiffLine,
 } from './github-scraper.js';
 import { injectCommentDraft } from './github-comment-injector.js';
+import { preparePrReviewDraft } from './github-pr-review.js';
 import {
   openModal,
   closeModal,
@@ -157,6 +158,9 @@ async function openReviewerModal() {
       exportCurrentAnalysis();
     },
 
+    onPrReviewApprove: () => runPrReviewDraft('approve'),
+    onPrReviewRequestChanges: () => runPrReviewDraft('request_changes'),
+
     onRedo: async () => {
       if (operationInProgress) {
         showError('Aguarde a operação atual terminar antes de refazer.');
@@ -234,6 +238,9 @@ async function openReviewerModal() {
 
   if (lastReview) {
     renderReviewResults(lastReview);
+  }
+  if (lastScore) {
+    renderScoreResults(lastScore);
   }
 }
 
@@ -372,6 +379,24 @@ function sendBackground(payload) {
  */
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * @param {'approve'|'request_changes'} decision
+ */
+async function runPrReviewDraft(decision) {
+  if (!lastScore && !lastReview) {
+    showError('Medir Score ou Revisar PR antes de aprovar/solicitar alterações.');
+    return;
+  }
+  closeModal();
+  await delay(250);
+  const res = await preparePrReviewDraft(decision, lastReview, lastScore);
+  if (!res.success) {
+    window.alert(res.message);
+    return;
+  }
+  window.alert(res.message);
 }
 
 function exportCurrentAnalysis() {

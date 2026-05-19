@@ -44,6 +44,8 @@
         "content/github-comment-thread.js",
         "content/review-export.js",
         "content/attached-context.js",
+        "content/github-pr-review.js",
+        "content/pr-review-summary.js",
         "shared/constants.js",
         "shared/pr-url.js",
         "shared/github-selectors.js",

@@ -52,6 +52,27 @@ export const GITHUB_SELECTORS = Object.freeze({
 
   /** aria-label útil para blocos de arquivo */
   diffForLabelPrefix: 'Diff for:',
+
+  /** Review final do PR (toolbar /changes — Finish your review) */
+  reviewMenuButton:
+    'button[class*="ReviewMenuButton-module__ReviewMenuButton"]',
+  reviewDialogTitle: '#anchored-review-title',
+  reviewDialogBody: '[class*="ReviewMenuButton-module__AnchoredReviewBody"]',
+  reviewEventRadio: (value) =>
+    `input[type="radio"][name="reviewEvent"][value="${value}"]`,
+  reviewCommentTextarea:
+    '[class*="ReviewMenuButton-module__AnchoredReviewBody"] textarea[placeholder="Leave a comment"]',
+  reviewCommentTextareaFallback:
+    '#anchored-review-title ~ * textarea[placeholder="Leave a comment"], [class*="ReviewMenuButton-module__CommentBoxContainer"] textarea',
+  reviewSubmitButton:
+    '[class*="ReviewMenuButton-module__AnchoredReviewBody"] button[class*="prc-Button-ButtonBase"]',
+});
+
+/** Valores do radio name="reviewEvent" no diálogo Finish your review */
+export const GITHUB_REVIEW_EVENT = Object.freeze({
+  COMMENT: 'comment',
+  APPROVE: 'approve',
+  REQUEST_CHANGES: 'request changes',
 });
 
 /**

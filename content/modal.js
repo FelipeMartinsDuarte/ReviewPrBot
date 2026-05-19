@@ -251,6 +251,14 @@ function bindEvents(root, options) {
       options.onExportReview?.();
       return;
     }
+    if (target.closest('[data-action="pr-approve"]')) {
+      options.onPrReviewApprove?.();
+      return;
+    }
+    if (target.closest('[data-action="pr-request-changes"]')) {
+      options.onPrReviewRequestChanges?.();
+      return;
+    }
     const action = target.closest('[data-finding-action]');
     if (!action) {
       return;
@@ -463,7 +471,7 @@ export function renderScoreResults(score) {
   if (!root) {
     return;
   }
-  hideLoading(root);
+  showScorePanel(root);
 
   const container = root.querySelector('#mr-view-score');
   if (!container) {
@@ -491,9 +499,20 @@ export function renderScoreResults(score) {
           <div><strong>${escapeHtml(c.name)}</strong><br/>${escapeHtml(c.detail ?? '')}</div>
         </div>`).join('')}
     </div>
-    ${score.recommendations?.length ? `<h4 style="margin-top:16px;">Recomendações</h4><ul style="font-size:0.875rem;color:var(--mr-muted);">${score.recommendations.map((r) => `<li>${escapeHtml(r)}</li>`).join('')}</ul>` : ''}`;
+    ${score.recommendations?.length ? `<h4 style="margin-top:16px;">Recomendações</h4><ul style="font-size:0.875rem;color:var(--mr-muted);">${score.recommendations.map((r) => `<li>${escapeHtml(r)}</li>`).join('')}</ul>` : ''}
+    ${scoreReviewActionsHtml()}`;
 
   container.classList.remove('mobilinho-hidden');
+}
+
+function scoreReviewActionsHtml() {
+  return `<div class="mobilinho-score-review-actions">
+    <p class="mobilinho-attach-hint">Preenche o formulário <strong>Finish your review</strong> do GitHub com o resumo dos achados (não envia automaticamente).</p>
+    <div class="mobilinho-score-review-buttons">
+      <button type="button" class="mobilinho-btn mobilinho-btn--primary" data-action="pr-approve">Aprovar PR</button>
+      <button type="button" class="mobilinho-btn mobilinho-btn--danger" data-action="pr-request-changes">Solicitar alterações</button>
+    </div>
+  </div>`;
 }
 
 /**
@@ -527,6 +546,16 @@ function showResultsPanel(root) {
   root.querySelector('#mr-view-home')?.classList.add('mobilinho-hidden');
   root.querySelector('#mr-view-score')?.classList.add('mobilinho-hidden');
   root.querySelector('#mr-view-results')?.classList.remove('mobilinho-hidden');
+}
+
+/**
+ * @param {Element} root
+ */
+function showScorePanel(root) {
+  root.querySelector('#mr-view-loading')?.classList.add('mobilinho-hidden');
+  root.querySelector('#mr-view-home')?.classList.add('mobilinho-hidden');
+  root.querySelector('#mr-view-results')?.classList.add('mobilinho-hidden');
+  root.querySelector('#mr-view-score')?.classList.remove('mobilinho-hidden');
 }
 
 function getOverlay() {

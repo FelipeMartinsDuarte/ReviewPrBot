@@ -57,3 +57,18 @@ b:{base}-l:{left}-r:{right}
 
 ### Fallback
 Se reply falhar, tenta comentário novo na **primeira linha abaixo** sem thread.
+
+## Review final do PR (Finish your review)
+
+Validado em `github-selector-rejectaceept.txt` (toolbar da aba /changes).
+
+| Uso | Seletor |
+|-----|---------|
+| Abrir diálogo | `button[class*="ReviewMenuButton-module__ReviewMenuButton"]` (texto "Submit review") |
+| Título | `#anchored-review-title` → "Finish your review" |
+| Corpo | `[class*="ReviewMenuButton-module__AnchoredReviewBody"]` |
+| Approve | `input[name="reviewEvent"][value="approve"]` |
+| Request changes | `input[name="reviewEvent"][value="request changes"]` |
+| Comentário geral | `textarea[placeholder="Leave a comment"]` dentro do corpo do diálogo |
+
+**MobilinhoReviewer:** preenche radio + comentário; **não** clica em Submit review (mesmo padrão dos comentários inline).

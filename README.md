@@ -16,6 +16,7 @@ Extensão Chrome para code review de Pull Requests no GitHub com OpenAI.
 4. **Abrir MobilinhoReviewer** → revisar, aceitar achados, medir score
 5. **Exportar análise (.txt)** — após revisar ou medir score, use o botão nos resultados
 6. **Anexar contexto** — no PR do front, escolha o `.txt` exportado do back, marque *Incluir .txt anexado* e rode **Revisar PR** ou **Medir Score**
+7. **Após Medir Score** — use **Aprovar PR** ou **Solicitar alterações** para preencher o *Finish your review* do GitHub com o resumo dos achados (você confirma o envio no GitHub)
 
 ## Seletores GitHub (validados)
 

@@ -183,6 +183,19 @@
   margin-bottom: 16px;
 }
 
+.mobilinho-score-review-actions {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--mr-border);
+}
+
+.mobilinho-score-review-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
 .mobilinho-checkbox-row {
   display: flex;
   align-items: center;

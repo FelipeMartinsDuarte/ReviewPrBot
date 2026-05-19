@@ -75,4 +75,11 @@ export const LIMITS = Object.freeze({
   /** DOM: tentativas ao abrir editor de comentário */
   MAX_COMMENT_EDITOR_WAIT_ITERATIONS: 20,
   COMMENT_EDITOR_WAIT_MS: 200,
+
+  /** Diálogo Finish your review (GitHub) */
+  MAX_REVIEW_DIALOG_WAIT_ITERATIONS: 25,
+  REVIEW_DIALOG_WAIT_MS: 200,
+
+  /** Comentário geral no Submit review */
+  MAX_PR_REVIEW_SUMMARY_CHARS: 16_000,
 });
