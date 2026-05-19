@@ -1,0 +1,57 @@
+{
+  "manifest_version": 3,
+  "name": "MobilinhoReviewer",
+  "version": "1.0.0",
+  "description": "Code review inteligente para Pull Requests do GitHub com OpenAI",
+  "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": [
+    "https://github.com/*",
+    "https://api.openai.com/*"
+  ],
+  "background": {
+    "service_worker": "background/service-worker.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://github.com/*"],
+      "js": ["content/loader.js"],
+      "css": ["content/modal.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "content/modal.css",
+        "content/content.js",
+        "content/modal.js",
+        "content/github-scraper.js",
+        "content/github-comment-injector.js",
+        "content/github-comment-thread.js",
+        "content/review-export.js",
+        "content/attached-context.js",
+        "shared/constants.js",
+        "shared/pr-url.js",
+        "shared/github-selectors.js",
+        "shared/validators.js",
+        "shared/limits.js",
+        "shared/model-options.js"
+      ],
+      "matches": ["https://github.com/*"]
+    }
+  ]
+}
