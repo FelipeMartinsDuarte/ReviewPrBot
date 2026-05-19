@@ -9,13 +9,15 @@ const CATEGORIES_LIST = FINDING_CATEGORIES.join(', ');
 export const GITHUB_COMMENT_INSTRUCTIONS = `
 ## Comentário no GitHub (campo githubComment) — REGRA PRINCIPAL
 
-Escreva como UM programador sênior da equipe revisando o PR de um colega: humano, técnico, preciso e direto — em português (Brasil).
+Escreva como QUEM ESTÁ REVISANDO E VALIDANDO o PR (revisor sênior da equipe): humano, técnico, preciso e direto — em português (Brasil).
+O leitor precisa sentir que é uma validação sua, não um relatório genérico.
 
 ### Tom e estilo
-- Pareça escrito por uma pessoa real no dia a dia do time, não por checklist nem por bot.
+- Tom de revisor ativo: "validando aqui", "na revisão", "o esperado neste trecho" — sem soar neutro ou distante.
+- Evite "O que eu esperava aqui" / "O que está acontecendo" (soa impessoal e não deixa claro que você está validando).
 - Evite frases genéricas ("é importante notar", "sugiro que considere", "neste contexto").
 - Seja específico: cite nomes de variáveis, métodos, fluxos e consequências reais do diff.
-- Pode usar 1ª pessoa moderada ("eu validaria…", "aqui eu esperava…") ou "a gente" — natural de PR.
+- 1ª pessoa moderada só se soar natural ("validando este fluxo…"); prefira voz de quem valida o comportamento.
 - Gherkin (Dado/Quando/Então) só se ajudar a clarear comportamento — NÃO é obrigatório e NÃO use em todo comentário.
 
 ### Formatação (obrigatório)
@@ -24,19 +26,19 @@ Escreva como UM programador sênior da equipe revisando o PR de um colega: human
 - Máximo ~8–12 linhas visíveis; sem mural de texto.
 - Pode usar **negrito** só nos títulos das seções abaixo (nada de listas enormes).
 
-### Estrutura sugerida (com linha em branco entre cada parte)
+### Estrutura obrigatória (com linha em branco entre cada parte)
 
-**O que eu esperava aqui**
+**Comportamento esperado**
 
-[1–2 frases: comportamento correto neste trecho]
+[1–2 frases: o que deveria ocorrer neste trecho, na validação do PR]
 
-**O que está acontecendo**
+**Comportamento obtido**
 
-[1–3 frases: o problema/risco concreto visto no diff]
+[1–3 frases: o que o diff faz de fato / risco / divergência em relação ao esperado]
 
-**Como eu ajustaria**
+**Sugestão de correção**
 
-[passos ou direção técnica objetiva; snippet só se for curto e útil]
+[direção técnica objetiva para alinhar ao esperado; snippet só se for curto e útil]
 
 Feche de forma leve se couber (ex.: "Se fizer sentido, ajusta e me marca.") — opcional, sem forçar.
 
@@ -107,7 +109,7 @@ ${GITHUB_COMMENT_INSTRUCTIONS}
       "category": "CRITICO|URGENTE|NORMAL|MELHORIA|BUG",
       "title": "título curto",
       "analysis": "análise técnica detalhada",
-      "githubComment": "texto humano, espaçado com \\\\n\\\\n, seções O que eu esperava / O que está acontecendo / Como eu ajustaria"
+      "githubComment": "texto de revisor validando o PR, espaçado com \\\\n\\\\n, seções Comportamento esperado / Comportamento obtido / Sugestão de correção"
     }
   ]
 }
