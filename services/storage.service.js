@@ -55,6 +55,23 @@ export async function getCredentials() {
  * @param {{ apiKey: string, model: string }} config
  * @returns {Promise<void>}
  */
+/**
+ * @returns {Promise<boolean>}
+ */
+export async function getBitrixSendSoEnabled() {
+  const stored = await chrome.storage.local.get(STORAGE_KEYS.BITRIX_SEND_SO);
+  return Boolean(stored[STORAGE_KEYS.BITRIX_SEND_SO]);
+}
+
+/**
+ * @param {boolean} enabled
+ */
+export async function setBitrixSendSoEnabled(enabled) {
+  await chrome.storage.local.set({
+    [STORAGE_KEYS.BITRIX_SEND_SO]: Boolean(enabled),
+  });
+}
+
 export async function saveCredentials(config) {
   const apiKey = assertNonEmptyString(config.apiKey, 'apiKey');
   const model = assertAllowedModel(config.model);

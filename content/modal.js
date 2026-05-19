@@ -4,6 +4,9 @@ import { buildModelSelectHtml } from '../shared/model-options.js';
 /** @type {ShadowRoot|null} */
 let shadowRoot = null;
 
+/** @type {object|null} */
+let activeModalOptions = null;
+
 /**
  * @param {object} options
  */
@@ -25,6 +28,7 @@ export function openModal(options) {
   overlay.innerHTML = buildShell(options);
   shadowRoot.appendChild(overlay);
 
+  activeModalOptions = options;
   bindEvents(overlay, options);
 }
 
@@ -34,6 +38,16 @@ export function closeModal() {
     host.remove();
   }
   shadowRoot = null;
+  activeModalOptions = null;
+}
+
+/**
+ * @returns {boolean}
+ */
+export function isBitrixSendSoChecked() {
+  const root = getOverlay();
+  const box = root?.querySelector('#mr-bitrix-send-so');
+  return box instanceof HTMLInputElement ? box.checked : false;
 }
 
 /**
@@ -465,8 +479,9 @@ function findingCard(f) {
 
 /**
  * @param {object} score
+ * @param {boolean} [bitrixSendSo]
  */
-export function renderScoreResults(score) {
+export function renderScoreResults(score, bitrixSendSo = false) {
   const root = getOverlay();
   if (!root) {
     return;
@@ -500,14 +515,34 @@ export function renderScoreResults(score) {
         </div>`).join('')}
     </div>
     ${score.recommendations?.length ? `<h4 style="margin-top:16px;">Recomendações</h4><ul style="font-size:0.875rem;color:var(--mr-muted);">${score.recommendations.map((r) => `<li>${escapeHtml(r)}</li>`).join('')}</ul>` : ''}
-    ${scoreReviewActionsHtml()}`;
+    ${scoreReviewActionsHtml(bitrixSendSo)}`;
 
   container.classList.remove('mobilinho-hidden');
+  bindBitrixCheckbox(root);
 }
 
-function scoreReviewActionsHtml() {
+/**
+ * @param {Element} root
+ */
+function bindBitrixCheckbox(root) {
+  const box = root.querySelector('#mr-bitrix-send-so');
+  if (!(box instanceof HTMLInputElement)) {
+    return;
+  }
+  box.addEventListener('change', () => {
+    activeModalOptions?.onBitrixSendSoChange?.(box.checked);
+  });
+}
+
+function scoreReviewActionsHtml(bitrixSendSo = false) {
+  const bitrixChecked = bitrixSendSo ? 'checked' : '';
   return `<div class="mobilinho-score-review-actions">
     <p class="mobilinho-attach-hint">Preenche o formulário <strong>Finish your review</strong> do GitHub com o resumo dos achados (não envia automaticamente).</p>
+    <div class="mobilinho-checkbox-row">
+      <input type="checkbox" id="mr-bitrix-send-so" ${bitrixChecked} />
+      <label for="mr-bitrix-send-so">Enviar no Grupo de SO (Bitrix)</label>
+    </div>
+    <p class="mobilinho-attach-hint">Abre o Bitrix, busca o grupo Portal web SO, responde na mensagem do mesmo PR (rola o histórico com limite) e envia nome do PR + status + link.</p>
     <div class="mobilinho-score-review-buttons">
       <button type="button" class="mobilinho-btn mobilinho-btn--primary" data-action="pr-approve">Aprovar PR</button>
       <button type="button" class="mobilinho-btn mobilinho-btn--danger" data-action="pr-request-changes">Solicitar alterações</button>

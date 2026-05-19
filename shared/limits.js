@@ -82,4 +82,15 @@ export const LIMITS = Object.freeze({
 
   /** Comentário geral no Submit review */
   MAX_PR_REVIEW_SUMMARY_CHARS: 16_000,
+
+  /** Bitrix24 messenger */
+  BITRIX_MESSENGER_WAIT_ITERATIONS: 40,
+  BITRIX_TEXTAREA_WAIT_ITERATIONS: 25,
+  /** Rolagem para cima ao buscar mensagem do PR (não infinita) */
+  BITRIX_MAX_SCROLL_STEPS: 12,
+  BITRIX_SCROLL_PIXELS: 700,
+  BITRIX_SCROLL_WAIT_MS: 450,
+  BITRIX_STEP_WAIT_MS: 250,
+  BITRIX_SEARCH_WAIT_MS: 800,
+  BITRIX_CHAT_OPEN_WAIT_MS: 1200,
 });

@@ -18,6 +18,19 @@ export function isPrChangesPage(url) {
  * @param {string} [url]
  * @returns {string}
  */
+/**
+ * URL do PR no GitHub (sem /changes, /files, etc.).
+ * @param {string} [url]
+ * @returns {string}
+ */
+export function getPullRequestUrl(url) {
+  const canonical = getCanonicalPrUrl(url);
+  return canonical.replace(
+    /\/(changes|files|commits|checks)(\/.*)?$/i,
+    ''
+  );
+}
+
 export function getCanonicalPrUrl(url) {
   const value =
     typeof url === 'string' && url.length > 0

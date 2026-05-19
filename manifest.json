@@ -6,7 +6,8 @@
   "permissions": ["storage", "activeTab", "scripting"],
   "host_permissions": [
     "https://github.com/*",
-    "https://api.openai.com/*"
+    "https://api.openai.com/*",
+    "https://mobilemed.bitrix24.com.br/*"
   ],
   "background": {
     "service_worker": "background/service-worker.js",
@@ -31,6 +32,11 @@
       "js": ["content/loader.js"],
       "css": ["content/modal.css"],
       "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://mobilemed.bitrix24.com.br/*"],
+      "js": ["content/bitrix-loader.js"],
+      "run_at": "document_idle"
     }
   ],
   "web_accessible_resources": [
@@ -54,6 +60,16 @@
         "shared/model-options.js"
       ],
       "matches": ["https://github.com/*"]
+    },
+    {
+      "resources": [
+        "content/bitrix-messenger.js",
+        "shared/bitrix-selectors.js",
+        "shared/bitrix-message.js",
+        "shared/constants.js",
+        "shared/limits.js"
+      ],
+      "matches": ["https://mobilemed.bitrix24.com.br/*"]
     }
   ]
 }

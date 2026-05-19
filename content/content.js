@@ -17,7 +17,9 @@ import {
   setModalBusy,
   setAttachFileLabel,
   setIncludeExternalChecked,
+  isBitrixSendSoChecked,
 } from './modal.js';
+import { getPullRequestUrl } from '../shared/pr-url.js';
 import {
   loadAttachedFile,
   clearAttachedContext,
@@ -102,6 +104,10 @@ async function handleMessage(message) {
 
 async function openReviewerModal() {
   const configRes = await sendBackground({ type: MESSAGE_TYPES.GET_CONFIG });
+  const bitrixRes = await sendBackground({
+    type: MESSAGE_TYPES.GET_BITRIX_SEND_SO,
+  });
+  const bitrixSendSo = Boolean(bitrixRes?.enabled);
   const onPage = isPrChangesPage();
 
   if (onPage) {
@@ -160,6 +166,13 @@ async function openReviewerModal() {
 
     onPrReviewApprove: () => runPrReviewDraft('approve'),
     onPrReviewRequestChanges: () => runPrReviewDraft('request_changes'),
+
+    onBitrixSendSoChange: async (enabled) => {
+      await sendBackground({
+        type: MESSAGE_TYPES.SET_BITRIX_SEND_SO,
+        enabled,
+      });
+    },
 
     onRedo: async () => {
       if (operationInProgress) {
@@ -240,7 +253,7 @@ async function openReviewerModal() {
     renderReviewResults(lastReview);
   }
   if (lastScore) {
-    renderScoreResults(lastScore);
+    renderScoreResults(lastScore, bitrixSendSo);
   }
 }
 
@@ -336,7 +349,10 @@ async function runScoreFlow(userNotes, externalContext = '') {
     }
 
     lastScore = result.score;
-    renderScoreResults(lastScore);
+    const bitrixRes = await sendBackground({
+      type: MESSAGE_TYPES.GET_BITRIX_SEND_SO,
+    });
+    renderScoreResults(lastScore, Boolean(bitrixRes?.enabled));
   } catch (err) {
     showError(err instanceof Error ? err.message : String(err));
   } finally {
@@ -396,7 +412,23 @@ async function runPrReviewDraft(decision) {
     window.alert(res.message);
     return;
   }
-  window.alert(res.message);
+
+  let message = res.message;
+  if (isBitrixSendSoChecked()) {
+    const prUrl = getPullRequestUrl();
+    try {
+      await sendBackground({
+        type: MESSAGE_TYPES.BITRIX_POST_SO,
+        prUrl,
+        decision,
+      });
+      message += '\n\nBitrix: abrindo grupo [Portal web] SO`s para responder na mensagem do PR.';
+    } catch (err) {
+      message += `\n\nBitrix: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  }
+
+  window.alert(message);
 }
 
 function exportCurrentAnalysis() {

@@ -3,7 +3,10 @@ import { sanitizeErrorMessage } from '../shared/sanitize.js';
 import {
   getConfigStatus,
   saveCredentials,
+  getBitrixSendSoEnabled,
+  setBitrixSendSoEnabled,
 } from '../services/storage.service.js';
+import { scheduleBitrixSoPost } from './bitrix-bridge.js';
 import { runFullReview, runScore } from '../services/analysis.service.js';
 import { validatePrMessageSize } from '../services/payload-guard.service.js';
 import { isPlainObject } from '../shared/validators.js';
@@ -99,6 +102,28 @@ async function handleMessage(message) {
         throw new Error('tabId inválido');
       }
       await openReviewerModalInTab(tabId);
+      return { ok: true };
+    }
+
+    case MESSAGE_TYPES.GET_BITRIX_SEND_SO: {
+      return { ok: true, enabled: await getBitrixSendSoEnabled() };
+    }
+
+    case MESSAGE_TYPES.SET_BITRIX_SEND_SO: {
+      await setBitrixSendSoEnabled(Boolean(message.enabled));
+      return { ok: true };
+    }
+
+    case MESSAGE_TYPES.BITRIX_POST_SO: {
+      const prUrl = String(message.prUrl ?? '').trim();
+      const decision = message.decision;
+      if (!prUrl) {
+        throw new Error('URL do PR obrigatória');
+      }
+      if (decision !== 'approve' && decision !== 'request_changes') {
+        throw new Error('decision inválida');
+      }
+      await scheduleBitrixSoPost({ prUrl, decision });
       return { ok: true };
     }
 
