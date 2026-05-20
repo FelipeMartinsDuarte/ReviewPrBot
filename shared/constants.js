@@ -1,5 +1,5 @@
 /** @readonly */
-export const EXTENSION_NAME = 'MobilinhoReviewer';
+export const EXTENSION_NAME = 'FelipeDosReview';
 
 /** @readonly */
 export const STORAGE_KEYS = Object.freeze({

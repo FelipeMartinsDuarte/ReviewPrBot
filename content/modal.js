@@ -83,7 +83,7 @@ function buildShell(options) {
       <div class="mobilinho-backdrop">
         <div class="mobilinho-modal">
           <header class="mobilinho-header">
-            <div class="mobilinho-logo">Mobilinho<span>Reviewer</span></div>
+            <div class="mobilinho-logo">Felipe<span>DosReview</span></div>
             <button class="mobilinho-close" data-action="close">&times;</button>
           </header>
           <div class="mobilinho-body">
@@ -99,7 +99,7 @@ function buildShell(options) {
     <div class="mobilinho-backdrop">
       <div class="mobilinho-modal">
         <header class="mobilinho-header">
-          <div class="mobilinho-logo">Mobilinho<span>Reviewer</span></div>
+          <div class="mobilinho-logo">Felipe<span>DosReview</span></div>
           <button class="mobilinho-close" data-action="close">&times;</button>
         </header>
         <div class="mobilinho-body" id="mr-body">
@@ -175,6 +175,7 @@ function actionButtons() {
   return `
     <button class="mobilinho-btn mobilinho-btn--primary" data-action="run-review">Revisar PR</button>
     <button class="mobilinho-btn" data-action="run-score">Medir Score</button>
+    <button class="mobilinho-btn" data-action="export-review">Exportar .txt</button>
     <button class="mobilinho-btn" data-action="redo">Refazer análise</button>
     <button class="mobilinho-btn" data-action="settings">Configurações</button>`;
 }
@@ -367,7 +368,7 @@ export function setAttachFileLabel(fileName) {
 
 function exportToolbarHtml() {
   return `<div class="mobilinho-toolbar">
-    <button type="button" class="mobilinho-btn" data-action="export-review">Exportar análise (.txt)</button>
+    <button type="button" class="mobilinho-btn" data-action="export-review">Exportar análise + diff (.txt)</button>
   </div>`;
 }
 

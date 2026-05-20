@@ -123,8 +123,7 @@ async function handleMessage(message) {
       if (decision !== 'approve' && decision !== 'request_changes') {
         throw new Error('decision inválida');
       }
-      await scheduleBitrixSoPost({ prUrl, decision });
-      return { ok: true };
+      return scheduleBitrixSoPost({ prUrl, decision });
     }
 
     default:

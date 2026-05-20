@@ -19,7 +19,7 @@ import { buildPrReviewSummaryText } from './pr-review-summary.js';
  * @returns {Promise<{ success: boolean, message: string }>}
  */
 export async function preparePrReviewDraft(decision, review, score) {
-  const summary = buildPrReviewSummaryText(review, score);
+  const summary = buildPrReviewSummaryText(review, score, decision);
   if (!summary.trim()) {
     return {
       success: false,
@@ -75,7 +75,7 @@ export async function preparePrReviewDraft(decision, review, score) {
     decision === 'approve' ? 'Approve' : 'Request changes';
   return {
     success: true,
-    message: `${label} selecionado e comentário preenchido — confira e clique em Submit review no GitHub.`,
+    message: `${label} selecionado no GitHub.`,
   };
 }
 

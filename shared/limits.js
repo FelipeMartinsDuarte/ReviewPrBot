@@ -31,10 +31,17 @@ export const LIMITS = Object.freeze({
   MAX_USER_NOTES_CHARS: 1500,
 
   /** Contexto externo (.txt de outro PR, ex.: back ao revisar front) */
-  MAX_EXTERNAL_CONTEXT_CHARS: 24_000,
+  MAX_EXTERNAL_CONTEXT_CHARS: 100_000,
 
   /** Tamanho máximo do arquivo .txt anexado */
-  MAX_ATTACH_FILE_BYTES: 512_000,
+  MAX_ATTACH_FILE_BYTES: 2_000_000,
+
+  /** Exportação .txt — diff completo + análise */
+  MAX_EXPORT_FILES: 80,
+  MAX_EXPORT_LINES_PER_FILE: 3000,
+  MAX_EXPORT_LINE_CONTENT_CHARS: 8000,
+  MAX_EXPORT_EXISTING_COMMENTS: 50,
+  MAX_EXPORT_TOTAL_CHARS: 1_500_000,
 
   /** Payload JSON total aproximado (~28k tokens) */
   MAX_TOTAL_PAYLOAD_CHARS: 100_000,

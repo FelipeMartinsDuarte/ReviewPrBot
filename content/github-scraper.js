@@ -20,24 +20,63 @@ export function getPrUrl() {
  * @returns {{ prUrl: string, files: object[], existingComments: object[] }}
  */
 export function scrapePullRequest() {
+  return scrapePullRequestWithLimits({
+    maxFiles: LIMITS.MAX_FILES,
+    maxLinesPerFile: LIMITS.MAX_LINES_PER_FILE,
+    maxLineContentChars: LIMITS.MAX_LINE_CONTENT_CHARS,
+    maxExistingComments: LIMITS.MAX_EXISTING_COMMENTS,
+    maxCommentBodyChars: LIMITS.MAX_COMMENT_BODY_CHARS,
+  });
+}
+
+/**
+ * Coleta diff amplo para exportação .txt (anexar em outro PR).
+ * @returns {{ prUrl: string, files: object[], existingComments: object[], exportMeta: object }}
+ */
+export function scrapePullRequestForExport() {
+  return scrapePullRequestWithLimits({
+    maxFiles: LIMITS.MAX_EXPORT_FILES,
+    maxLinesPerFile: LIMITS.MAX_EXPORT_LINES_PER_FILE,
+    maxLineContentChars: LIMITS.MAX_EXPORT_LINE_CONTENT_CHARS,
+    maxExistingComments: LIMITS.MAX_EXPORT_EXISTING_COMMENTS,
+    maxCommentBodyChars: LIMITS.MAX_COMMENT_BODY_CHARS,
+    trackTruncation: true,
+  });
+}
+
+/**
+ * @param {object} cfg
+ */
+function scrapePullRequestWithLimits(cfg) {
   if (!isPrChangesPage()) {
     throw new Error('Não está na aba Files changed do PR');
   }
 
-  const files = scrapeFiles();
-  const existingComments = scrapeExistingComments();
+  const { files, filesTruncated, linesTruncatedFiles } = scrapeFiles(cfg);
+  const existingComments = scrapeExistingComments(cfg);
 
-  return {
+  const result = {
     prUrl: getPrUrl(),
     files,
     existingComments,
   };
+
+  if (cfg.trackTruncation) {
+    result.exportMeta = {
+      filesTruncated,
+      linesTruncatedFiles,
+      fileCount: files.length,
+    };
+  }
+
+  return result;
 }
 
 /**
- * @returns {object[]}
+ * @param {object} cfg
+ * @returns {{ files: object[], filesTruncated: boolean, linesTruncatedFiles: string[] }}
  */
-function scrapeFiles() {
+function scrapeFiles(cfg) {
   const pathElements = document.querySelectorAll(
     `${GITHUB_SELECTORS.filePathAttr}`
   );
@@ -59,42 +98,55 @@ function scrapeFiles() {
     });
   }
 
+  const pathList = [...paths];
+  const filesTruncated = pathList.length > cfg.maxFiles;
+  const linesTruncatedFiles = [];
   const files = [];
   let count = 0;
-  for (const filePath of paths) {
-    if (count >= LIMITS.MAX_FILES) {
+
+  for (const filePath of pathList) {
+    if (count >= cfg.maxFiles) {
       break;
     }
-    const fileData = scrapeFileDiff(filePath);
+    const fileData = scrapeFileDiff(filePath, cfg, linesTruncatedFiles);
     if (fileData.lines.length > 0) {
       files.push(fileData);
       count += 1;
     }
   }
 
-  return files;
+  return { files, filesTruncated, linesTruncatedFiles };
 }
 
 /**
  * @param {string} filePath
+ * @param {object} cfg
+ * @param {string[]} linesTruncatedFiles
  */
-function scrapeFileDiff(filePath) {
+function scrapeFileDiff(filePath, cfg, linesTruncatedFiles) {
   const diffRoot = findDiffRootForFile(filePath);
   const lines = [];
 
   if (!diffRoot) {
-    return { path: filePath, lines: [] };
+    return { path: filePath, lines: [], patch: '' };
   }
 
   const rows = diffRoot.querySelectorAll(GITHUB_SELECTORS.diffLineRow);
+  let hitLineCap = false;
+
   for (const row of rows) {
-    if (lines.length >= LIMITS.MAX_LINES_PER_FILE) {
+    if (lines.length >= cfg.maxLinesPerFile) {
+      hitLineCap = true;
       break;
     }
-    const line = parseDiffRow(row, filePath);
+    const line = parseDiffRow(row, filePath, cfg.maxLineContentChars);
     if (line) {
       lines.push(line);
     }
+  }
+
+  if (hitLineCap) {
+    linesTruncatedFiles.push(filePath);
   }
 
   const patch = buildPatchFromLines(lines);
@@ -136,7 +188,12 @@ export function findDiffRootForFile(filePath) {
  * @param {Element} row
  * @param {string} filePath
  */
-function parseDiffRow(row, filePath) {
+/**
+ * @param {Element} row
+ * @param {string} filePath
+ * @param {number} maxLineContentChars
+ */
+function parseDiffRow(row, filePath, maxLineContentChars) {
   const codeEl = row.querySelector(GITHUB_SELECTORS.codeText);
   if (!codeEl) {
     return null;
@@ -147,8 +204,8 @@ function parseDiffRow(row, filePath) {
   const marker = markerEl?.textContent?.trim() ?? '';
   const inner = codeEl.querySelector(GITHUB_SELECTORS.codeInner);
   let content = (inner?.textContent ?? codeEl.textContent ?? '').trim();
-  if (content.length > LIMITS.MAX_LINE_CONTENT_CHARS) {
-    content = `${content.slice(0, LIMITS.MAX_LINE_CONTENT_CHARS)}…`;
+  if (content.length > maxLineContentChars) {
+    content = `${content.slice(0, maxLineContentChars)}…`;
   }
 
   const rightCell =
@@ -202,14 +259,15 @@ export function buildPatchFromLines(lines) {
 }
 
 /**
+ * @param {object} cfg
  * @returns {object[]}
  */
-function scrapeExistingComments() {
+function scrapeExistingComments(cfg) {
   const comments = [];
   const threads = document.querySelectorAll(GITHUB_SELECTORS.reviewThread);
 
   for (const thread of threads) {
-    if (comments.length >= LIMITS.MAX_EXISTING_COMMENTS) {
+    if (comments.length >= cfg.maxExistingComments) {
       break;
     }
     const heading = thread
@@ -231,7 +289,7 @@ function scrapeExistingComments() {
       comments.push({
         line: lineRef ? parseInt(lineRef, 10) : null,
         author,
-        body: text.slice(0, LIMITS.MAX_COMMENT_BODY_CHARS),
+        body: text.slice(0, cfg.maxCommentBodyChars),
       });
     }
   }

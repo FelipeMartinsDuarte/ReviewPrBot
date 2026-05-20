@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "MobilinhoReviewer",
+  "name": "FelipeDosReview",
   "version": "1.0.0",
   "description": "Code review inteligente para Pull Requests do GitHub com OpenAI",
   "permissions": ["storage", "activeTab", "scripting"],

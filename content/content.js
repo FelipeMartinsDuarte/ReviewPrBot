@@ -2,6 +2,7 @@ import { MESSAGE_TYPES, FINDING_STATUS } from '../shared/constants.js';
 import {
   isPrChangesPage,
   scrapePullRequest,
+  scrapePullRequestForExport,
   getPrUrl,
   scrollToDiffLine,
 } from './github-scraper.js';
@@ -405,39 +406,76 @@ async function runPrReviewDraft(decision) {
     showError('Medir Score ou Revisar PR antes de aprovar/solicitar alterações.');
     return;
   }
+
+  let bitrixEnabled = isBitrixSendSoChecked();
+  if (!bitrixEnabled) {
+    const stored = await sendBackground({
+      type: MESSAGE_TYPES.GET_BITRIX_SEND_SO,
+    });
+    bitrixEnabled = Boolean(stored?.enabled);
+  }
+
   closeModal();
   await delay(250);
+
   const res = await preparePrReviewDraft(decision, lastReview, lastScore);
   if (!res.success) {
     window.alert(res.message);
     return;
   }
 
-  let message = res.message;
-  if (isBitrixSendSoChecked()) {
+  if (bitrixEnabled) {
     const prUrl = getPullRequestUrl();
     try {
-      await sendBackground({
+      const bitrixRes = await sendBackground({
         type: MESSAGE_TYPES.BITRIX_POST_SO,
         prUrl,
         decision,
       });
-      message += '\n\nBitrix: abrindo grupo [Portal web] SO`s para responder na mensagem do PR.';
+      if (!bitrixRes?.ok) {
+        window.alert(
+          bitrixRes?.error ??
+            'Falha ao enviar no Bitrix. Confira a aba do Bitrix24.'
+        );
+      }
     } catch (err) {
-      message += `\n\nBitrix: ${err instanceof Error ? err.message : String(err)}`;
+      window.alert(
+        err instanceof Error ? err.message : String(err)
+      );
     }
+    return;
   }
 
-  window.alert(message);
+  window.alert(
+    'Review preenchido no GitHub — confira e clique em Submit review.'
+  );
 }
 
 function exportCurrentAnalysis() {
-  if (!lastReview && !lastScore) {
-    showError('Nada para exportar. Rode Revisar PR ou Medir Score primeiro.');
+  if (!isPrChangesPage()) {
+    showError('Abra o PR na página /changes para exportar.');
     return;
   }
-  const prUrl = getPrUrl();
-  const text = buildReviewExportText(lastReview, lastScore, prUrl);
-  const filename = buildExportFilename(prUrl);
-  downloadTextFile(filename, text);
+
+  try {
+    const prData = scrapePullRequestForExport();
+    if (prData.files.length === 0 && !lastReview && !lastScore) {
+      showError(
+        'Nenhum diff visível. Role a página, expanda os arquivos e tente de novo.'
+      );
+      return;
+    }
+
+    const prUrl = getPrUrl();
+    const text = buildReviewExportText(
+      lastReview,
+      lastScore,
+      prUrl,
+      prData
+    );
+    const filename = buildExportFilename(prUrl);
+    downloadTextFile(filename, text);
+  } catch (err) {
+    showError(err instanceof Error ? err.message : String(err));
+  }
 }

@@ -13,6 +13,6 @@
       globalThis.__mobilinhoReviewerLoaded = true;
     })
     .catch((err) => {
-      console.error('[MobilinhoReviewer] Falha ao carregar:', err);
+      console.error('[FelipeDosReview] Falha ao carregar:', err);
     });
 })();

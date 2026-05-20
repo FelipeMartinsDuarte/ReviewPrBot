@@ -54,7 +54,7 @@ async function init() {
 
     app.innerHTML = `
       <div class="alert alert--ok">Pronto para revisar este PR.</div>
-      <button class="btn btn--primary" id="open-btn">Abrir MobilinhoReviewer</button>
+      <button class="btn btn--primary" id="open-btn">Abrir FelipeDosReview</button>
       <p class="meta">Modelo: ${escapeHtml(config.model)}</p>
       <p class="meta">Se não abrir, recarregue a página do PR (F5).</p>`;
 
@@ -94,7 +94,7 @@ async function openReviewer(tab) {
   } catch (err) {
     if (btn instanceof HTMLButtonElement) {
       btn.disabled = false;
-      btn.textContent = 'Abrir MobilinhoReviewer';
+      btn.textContent = 'Abrir FelipeDosReview';
     }
     showInlineError(err instanceof Error ? err.message : String(err));
   }

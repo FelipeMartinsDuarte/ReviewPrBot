@@ -1,4 +1,4 @@
-# MobilinhoReviewer
+# FelipeDosReview
 
 Extensão Chrome para code review de Pull Requests no GitHub com OpenAI.
 
@@ -11,10 +11,10 @@ Extensão Chrome para code review de Pull Requests no GitHub com OpenAI.
 ## Uso
 
 1. Abra o PR na página **/changes** (`/pull/N/changes`, com ou sem `#diff-…` no link)
-2. Clique no ícone **MobilinhoReviewer**
+2. Clique no ícone **FelipeDosReview**
 3. Configure API Key e escolha o modelo na lista (padrão: GPT-4o)
-4. **Abrir MobilinhoReviewer** → revisar, aceitar achados, medir score
-5. **Exportar análise (.txt)** — após revisar ou medir score, use o botão nos resultados
+4. **Abrir FelipeDosReview** → revisar, aceitar achados, medir score
+5. **Exportar .txt** — análise (se houver) + **diff completo** do PR na página; anexe no outro PR com *Incluir .txt anexado*
 6. **Anexar contexto** — no PR do front, escolha o `.txt` exportado do back, marque *Incluir .txt anexado* e rode **Revisar PR** ou **Medir Score**
 7. **Após Medir Score** — use **Aprovar PR** ou **Solicitar alterações** para preencher o *Finish your review* do GitHub com o resumo dos achados (você confirma o envio no GitHub)
 8. **Enviar no Grupo de SO (Bitrix)** — marque o checkbox antes de aprovar/solicitar alterações: abre o Bitrix, busca o grupo Portal web SO, localiza a mensagem do PR (com rolagem limitada para cima) e envia **status + nome do PR + link** (ex.: `Aprovado — mm-finance-contract-frontend #102` + URL)

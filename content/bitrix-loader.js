@@ -9,6 +9,6 @@
       globalThis.__mobilinhoBitrixLoaded = true;
     })
     .catch((err) => {
-      console.error('[MobilinhoReviewer] Bitrix:', err);
+      console.error('[FelipeDosReview] Bitrix:', err);
     });
 })();

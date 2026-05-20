@@ -4,9 +4,13 @@ import {
   STORAGE_KEYS,
 } from '../shared/constants.js';
 import { buildBitrixSoMessage } from '../shared/bitrix-message.js';
+import { sanitizeErrorMessage } from '../shared/sanitize.js';
+
+const BITRIX_LOADER = 'content/bitrix-loader.js';
 
 /**
  * @param {{ prUrl: string, decision: 'approve'|'request_changes' }} params
+ * @returns {Promise<{ ok: boolean, message?: string, error?: string }>}
  */
 export async function scheduleBitrixSoPost({ prUrl, decision }) {
   const statusLabel =
@@ -41,8 +45,13 @@ export async function scheduleBitrixSoPost({ prUrl, decision }) {
     tabId = tab.id;
   }
 
+  if (typeof tabId !== 'number') {
+    return { ok: false, error: 'Não foi possível abrir aba do Bitrix' };
+  }
+
   await waitForTabComplete(tabId);
-  await notifyBitrixTab(tabId);
+  await delay(2000);
+  return notifyBitrixTab(tabId);
 }
 
 /**
@@ -65,24 +74,66 @@ async function waitForTabComplete(tabId) {
     setTimeout(() => {
       chrome.tabs.onUpdated.removeListener(listener);
       resolve();
-    }, 25_000);
+    }, 30_000);
   });
 }
 
 /**
  * @param {number} tabId
+ * @returns {Promise<{ ok: boolean, message?: string, error?: string }>}
  */
 async function notifyBitrixTab(tabId) {
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 20; i++) {
     try {
-      await chrome.tabs.sendMessage(tabId, {
+      const response = await chrome.tabs.sendMessage(tabId, {
         type: MESSAGE_TYPES.BITRIX_RUN_PENDING,
       });
-      return;
-    } catch {
-      await delay(1500);
+      if (response && typeof response.ok === 'boolean') {
+        return response;
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (isMissingReceiverError(msg)) {
+        await injectBitrixScript(tabId);
+        await delay(800);
+      }
     }
+    await delay(1500);
   }
+
+  return {
+    ok: false,
+    error:
+      'Automação Bitrix não iniciou. Abra https://mobilemed.bitrix24.com.br/online/, recarregue (F5) e tente de novo.',
+  };
+}
+
+/**
+ * @param {number} tabId
+ */
+async function injectBitrixScript(tabId) {
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files: [BITRIX_LOADER],
+    });
+  } catch (err) {
+    throw new Error(
+      sanitizeErrorMessage(
+        `Falha ao injetar script no Bitrix: ${err instanceof Error ? err.message : err}`
+      )
+    );
+  }
+}
+
+/**
+ * @param {string} msg
+ */
+function isMissingReceiverError(msg) {
+  return (
+    msg.includes('Receiving end does not exist') ||
+    msg.includes('Could not establish connection')
+  );
 }
 
 /**

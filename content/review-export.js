@@ -1,32 +1,46 @@
 import { FINDING_STATUS } from '../shared/constants.js';
 import { getCanonicalPrUrl } from '../shared/pr-url.js';
+import { buildPatchFromLines } from './github-scraper.js';
+import { LIMITS } from '../shared/limits.js';
 
 /**
- * @param {object} review
- * @param {object} [score]
+ * @param {object|null} review
+ * @param {object|null} score
  * @param {string} [prUrl]
+ * @param {object|null} [prData]
  * @returns {string}
  */
-export function buildReviewExportText(review, score, prUrl) {
+export function buildReviewExportText(review, score, prUrl, prData) {
   const url = prUrl ?? getCanonicalPrUrl();
   const lines = [
-    'MobilinhoReviewer — Exportação',
+    'FelipeDosReview — Exportação',
     '='.repeat(50),
     `PR: ${url}`,
     `Gerado em: ${new Date().toLocaleString('pt-BR')}`,
     '',
+    'Use este arquivo no outro PR: marque "Incluir .txt anexado" antes de Revisar PR / Medir Score.',
+    '',
   ];
 
-  if (review) {
-    appendReviewSection(lines, review);
+  if (review || score) {
+    lines.push('PARTE 1 — ANÁLISE FELIPEDOSREVIEW', '='.repeat(50), '');
+    if (review) {
+      appendReviewSection(lines, review);
+    }
+    if (score) {
+      appendScoreSection(lines, score);
+    }
+    lines.push('');
+  } else {
+    lines.push(
+      '(Sem análise salva neste PR — exportando diff e comentários do GitHub.)',
+      ''
+    );
   }
 
-  if (score) {
-    appendScoreSection(lines, score);
-  }
-
-  if (!review && !score) {
-    lines.push('(Nenhuma análise disponível para exportar)');
+  if (prData) {
+    appendDiffSection(lines, prData);
+    appendExistingCommentsSection(lines, prData);
   }
 
   lines.push('', '— Fim do arquivo —');
@@ -94,6 +108,84 @@ function appendScoreSection(lines, score) {
 }
 
 /**
+ * @param {string[]} lines
+ * @param {object} prData
+ */
+function appendDiffSection(lines, prData) {
+  lines.push('PARTE 2 — DIFF COMPLETO DO PR (/changes)', '='.repeat(50), '');
+
+  const meta = prData.exportMeta ?? {};
+  const files = prData.files ?? [];
+
+  if (meta.filesTruncated) {
+    lines.push(
+      `Aviso: há mais arquivos no PR do que o limite de exportação (${LIMITS.MAX_EXPORT_FILES}). Role a página e expanda arquivos no diff.`
+    );
+  }
+  if (meta.linesTruncatedFiles?.length) {
+    lines.push(
+      `Aviso: linhas truncadas em: ${meta.linesTruncatedFiles.join(', ')}`
+    );
+  }
+  if (files.length === 0) {
+    lines.push(
+      '(Nenhuma linha de diff capturada. Role a página, expanda os arquivos e exporte de novo.)'
+    );
+    return;
+  }
+
+  lines.push(`Arquivos exportados: ${files.length}`, '');
+
+  let totalChars = 0;
+  let diffTruncated = false;
+
+  for (const file of files) {
+    const header = `\n${'='.repeat(60)}\nFILE: ${file.path}\n${'='.repeat(60)}\n`;
+    const patch =
+      file.patch?.trim() ||
+      buildPatchFromLines(file.lines ?? []);
+
+    const block = header + (patch || '(arquivo sem linhas no DOM)') + '\n';
+    if (totalChars + block.length > LIMITS.MAX_EXPORT_TOTAL_CHARS) {
+      diffTruncated = true;
+      break;
+    }
+    lines.push(block);
+    totalChars += block.length;
+  }
+
+  if (diffTruncated) {
+    lines.push(
+      '',
+      `… Diff truncado no limite de ~${Math.round(LIMITS.MAX_EXPORT_TOTAL_CHARS / 1000)}k caracteres. Exporte de novo após carregar mais arquivos na página.`
+    );
+  }
+}
+
+/**
+ * @param {string[]} lines
+ * @param {object} prData
+ */
+function appendExistingCommentsSection(lines, prData) {
+  const comments = prData.existingComments ?? [];
+  if (comments.length === 0) {
+    return;
+  }
+
+  lines.push('', 'COMENTÁRIOS JÁ EXISTENTES NO PR', '-'.repeat(50));
+  for (const c of comments) {
+    lines.push('');
+    if (c.line) {
+      lines.push(`Linha ${c.line} · ${c.author ?? '?'}`);
+    } else {
+      lines.push(String(c.author ?? '?'));
+    }
+    lines.push(c.body ?? '');
+    lines.push('-'.repeat(30));
+  }
+}
+
+/**
  * @param {string} filename
  * @param {string} content
  */
@@ -117,5 +209,5 @@ export function buildExportFilename(prUrl) {
   const match = prUrl.match(/\/pull\/(\d+)/);
   const num = match ? match[1] : 'pr';
   const date = new Date().toISOString().slice(0, 10);
-  return `mobilinho-review-pr${num}-${date}.txt`;
+  return `felipedosreview-pr${num}-${date}.txt`;
 }

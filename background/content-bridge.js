@@ -39,7 +39,7 @@ export async function openReviewerModalInTab(tabId) {
   });
 
   if (response && response.ok === false) {
-    throw new Error(response.error ?? 'Falha ao abrir o MobilinhoReviewer');
+    throw new Error(response.error ?? 'Falha ao abrir o FelipeDosReview');
   }
 
   return response;

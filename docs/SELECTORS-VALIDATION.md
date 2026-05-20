@@ -71,4 +71,4 @@ Validado em `github-selector-rejectaceept.txt` (toolbar da aba /changes).
 | Request changes | `input[name="reviewEvent"][value="request changes"]` |
 | Comentário geral | `textarea[placeholder="Leave a comment"]` dentro do corpo do diálogo |
 
-**MobilinhoReviewer:** preenche radio + comentário; **não** clica em Submit review (mesmo padrão dos comentários inline).
+**FelipeDosReview:** preenche radio + comentário; **não** clica em Submit review (mesmo padrão dos comentários inline).

@@ -67,8 +67,7 @@ async function runPendingBitrixJob() {
   await chrome.storage.session.remove(STORAGE_KEYS.BITRIX_PENDING);
   return {
     ok: true,
-    message:
-      'Resposta preenchida no Bitrix — confira e pressione Enter ou clique em Enviar.',
+    message: replied.message,
   };
 }
 

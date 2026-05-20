@@ -76,7 +76,7 @@ ${text.trim()}`;
  * @param {{ prUrl: string, files: object[], existingComments: object[], userNotes: string, externalContext?: string }} ctx
  */
 export function buildReviewSystemPrompt(ctx) {
-  return `Você é o MobilinhoReviewer, revisor sênior de código em Pull Requests do GitHub.
+  return `Você é o FelipeDosReview, revisor sênior de código em Pull Requests do GitHub.
 Analise o diff e comentários existentes com rigor técnico e tom profissional em português (Brasil).
 
 ## Metodologia (ordem obrigatória)
@@ -137,7 +137,7 @@ export function buildReviewUserPayload(ctx) {
  * @param {{ prUrl: string, files: object[], existingComments: object[], userNotes: string }} ctx
  */
 export function buildScoreSystemPrompt(ctx) {
-  return `Você é o MobilinhoReviewer avaliando se um PR deve ser APROVADO ou REPROVADO.
+  return `Você é o FelipeDosReview avaliando se um PR deve ser APROVADO ou REPROVADO.
 Considere TODO o código do diff e TODOS os comentários já presentes no PR.
 Não armazene estado — esta é uma avaliação pontual.
 
