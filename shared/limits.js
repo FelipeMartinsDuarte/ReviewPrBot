@@ -30,6 +30,10 @@ export const LIMITS = Object.freeze({
   /** Observações do usuário */
   MAX_USER_NOTES_CHARS: 1500,
 
+  /** Contexto da revisão anterior enviado ao score */
+  MAX_SCORE_REVIEW_CONTEXT_CHARS: 24_000,
+  MAX_SCORE_FINDING_TEXT_CHARS: 1200,
+
   /** Contexto externo (.txt de outro PR, ex.: back ao revisar front) */
   MAX_EXTERNAL_CONTEXT_CHARS: 100_000,
 

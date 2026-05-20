@@ -106,7 +106,7 @@ function buildShell(options) {
           ${!hasConfig ? configPanel(options.selectedModel) : mainPanel()}
         </div>
         <footer class="mobilinho-footer" id="mr-footer">
-          ${hasConfig ? actionButtons() : ''}
+          ${hasConfig ? `${notesPanelHtml()}${actionButtons()}` : ''}
         </footer>
       </div>
     </div>`;
@@ -129,25 +129,34 @@ function configPanel(selectedModel) {
     <button class="mobilinho-btn mobilinho-btn--primary" data-action="save-config">Salvar configuração</button>`;
 }
 
+function notesPanelHtml() {
+  return `
+    <div id="mr-notes-panel-review" class="mobilinho-notes-panel mobilinho-hidden" data-notes-kind="review">
+      <button type="button" class="mobilinho-notes-toggle" data-action="toggle-notes-review" aria-expanded="false">
+        <span>Observações — Revisar PR</span>
+        <span class="mobilinho-notes-toggle-icon" aria-hidden="true">+</span>
+      </button>
+      <div id="mr-notes-review-body" class="mobilinho-notes-body mobilinho-hidden">
+        <p class="mobilinho-attach-hint">Opcional — expanda só se quiser enviar contexto na revisão.</p>
+        <textarea class="mobilinho-textarea mobilinho-textarea--compact" id="mr-notes-review" placeholder="Contexto, escopo, o que validar..."></textarea>
+      </div>
+    </div>
+    <div id="mr-notes-panel-score" class="mobilinho-notes-panel mobilinho-hidden" data-notes-kind="score">
+      <button type="button" class="mobilinho-notes-toggle" data-action="toggle-notes-score" aria-expanded="false">
+        <span>Observações — Medir Score</span>
+        <span class="mobilinho-notes-toggle-icon" aria-hidden="true">+</span>
+      </button>
+      <div id="mr-notes-score-body" class="mobilinho-notes-body mobilinho-hidden">
+        <p class="mobilinho-attach-hint">Opcional — expanda só se quiser critérios extras no score.</p>
+        <textarea class="mobilinho-textarea mobilinho-textarea--compact" id="mr-notes-score" placeholder="Critérios, peso de riscos..."></textarea>
+        <p id="mr-score-review-hint" class="mobilinho-attach-hint mobilinho-hidden"></p>
+      </div>
+    </div>`;
+}
+
 function mainPanel() {
   return `
     <div id="mr-view-home">
-      <div class="mobilinho-checkbox-row">
-        <input type="checkbox" id="mr-include-notes-review" />
-        <label for="mr-include-notes-review">Incluir observações na revisão</label>
-      </div>
-      <div class="mobilinho-field mobilinho-hidden" id="mr-notes-review-wrap">
-        <label class="mobilinho-label">Suas observações</label>
-        <textarea class="mobilinho-textarea" id="mr-notes-review" placeholder="Contexto extra para a IA..."></textarea>
-      </div>
-      <div class="mobilinho-checkbox-row">
-        <input type="checkbox" id="mr-include-notes-score" />
-        <label for="mr-include-notes-score">Incluir observações na medição de score</label>
-      </div>
-      <div class="mobilinho-field mobilinho-hidden" id="mr-notes-score-wrap">
-        <label class="mobilinho-label">Observações para score</label>
-        <textarea class="mobilinho-textarea" id="mr-notes-score" placeholder="Critérios adicionais..."></textarea>
-      </div>
       <div class="mobilinho-field mobilinho-attach-block">
         <label class="mobilinho-label">Contexto de outro PR (.txt)</label>
         <p class="mobilinho-attach-hint">Exporte a análise do back (ou outro PR) e anexe aqui ao revisar o front.</p>
@@ -173,11 +182,13 @@ function mainPanel() {
 
 function actionButtons() {
   return `
-    <button class="mobilinho-btn mobilinho-btn--primary" data-action="run-review">Revisar PR</button>
-    <button class="mobilinho-btn" data-action="run-score">Medir Score</button>
-    <button class="mobilinho-btn" data-action="export-review">Exportar .txt</button>
-    <button class="mobilinho-btn" data-action="redo">Refazer análise</button>
-    <button class="mobilinho-btn" data-action="settings">Configurações</button>`;
+    <div class="mobilinho-footer-action-row">
+      <button class="mobilinho-btn mobilinho-btn--primary" data-action="run-review">Revisar PR</button>
+      <button class="mobilinho-btn" data-action="run-score">Medir Score</button>
+      <button class="mobilinho-btn" data-action="export-review">Exportar .txt</button>
+      <button class="mobilinho-btn" data-action="redo">Refazer análise</button>
+      <button class="mobilinho-btn" data-action="settings">Configurações</button>
+    </div>`;
 }
 
 /**
@@ -195,16 +206,6 @@ function bindEvents(root, options) {
       root.querySelector('#mr-model')
     )?.value;
     options.onSaveConfig?.(apiKey, model);
-  });
-
-  root.querySelector('#mr-include-notes-review')?.addEventListener('change', (e) => {
-    const wrap = root.querySelector('#mr-notes-review-wrap');
-    wrap?.classList.toggle('mobilinho-hidden', !/** @type {HTMLInputElement} */ (e.target).checked);
-  });
-
-  root.querySelector('#mr-include-notes-score')?.addEventListener('change', (e) => {
-    const wrap = root.querySelector('#mr-notes-score-wrap');
-    wrap?.classList.toggle('mobilinho-hidden', !/** @type {HTMLInputElement} */ (e.target).checked);
   });
 
   root.querySelector('[data-action="pick-attach"]')?.addEventListener('click', () => {
@@ -260,6 +261,15 @@ function bindEvents(root, options) {
     options.onSettings?.();
   });
 
+  root
+    .querySelector('[data-action="toggle-notes-review"]')
+    ?.addEventListener('click', () => toggleNotesPanel(root, 'review'));
+  root
+    .querySelector('[data-action="toggle-notes-score"]')
+    ?.addEventListener('click', () => toggleNotesPanel(root, 'score'));
+
+  setNotesPanelMode('review');
+
   root.addEventListener('click', (e) => {
     const target = /** @type {HTMLElement} */ (e.target);
     if (target.closest('[data-action="export-review"]')) {
@@ -296,16 +306,78 @@ function bindEvents(root, options) {
  * @param {'review'|'score'} kind
  */
 function getNotes(root, kind) {
-  const include = root.querySelector(
-    kind === 'review' ? '#mr-include-notes-review' : '#mr-include-notes-score'
-  );
-  if (!(/** @type {HTMLInputElement} */ (include)?.checked)) {
-    return '';
-  }
   const ta = root.querySelector(
     kind === 'review' ? '#mr-notes-review' : '#mr-notes-score'
   );
   return /** @type {HTMLTextAreaElement} */ (ta)?.value?.trim() ?? '';
+}
+
+/**
+ * @param {'review'|'score'|'none'} mode
+ */
+export function setNotesPanelMode(mode) {
+  const root = getOverlay();
+  if (!root) {
+    return;
+  }
+  const reviewPanel = root.querySelector('#mr-notes-panel-review');
+  const scorePanel = root.querySelector('#mr-notes-panel-score');
+  reviewPanel?.classList.toggle('mobilinho-hidden', mode !== 'review');
+  scorePanel?.classList.toggle('mobilinho-hidden', mode !== 'score');
+}
+
+/**
+ * @param {Element} root
+ * @param {'review'|'score'} kind
+ */
+function toggleNotesPanel(root, kind) {
+  const panel = root.querySelector(
+    kind === 'review' ? '#mr-notes-panel-review' : '#mr-notes-panel-score'
+  );
+  const body = root.querySelector(
+    kind === 'review' ? '#mr-notes-review-body' : '#mr-notes-score-body'
+  );
+  const btn = panel?.querySelector('.mobilinho-notes-toggle');
+  const icon = panel?.querySelector('.mobilinho-notes-toggle-icon');
+  if (!body || !btn) {
+    return;
+  }
+  const open = body.classList.toggle('mobilinho-hidden');
+  const expanded = !open;
+  btn.setAttribute('aria-expanded', String(expanded));
+  if (icon) {
+    icon.textContent = expanded ? '−' : '+';
+  }
+  if (expanded) {
+    body.querySelector('textarea')?.focus();
+  }
+}
+
+/**
+ * @param {object|null} review
+ */
+export function updateScoreReviewHint(review) {
+  const root = getOverlay();
+  const hint = root?.querySelector('#mr-score-review-hint');
+  if (!hint) {
+    return;
+  }
+  if (!review?.findings?.length) {
+    hint.classList.add('mobilinho-hidden');
+    hint.textContent = '';
+    return;
+  }
+  const rejected = review.findings.filter(
+    (f) => f.status === FINDING_STATUS.REJECTED
+  ).length;
+  const accepted = review.findings.filter(
+    (f) => f.status === FINDING_STATUS.ACCEPTED
+  ).length;
+  const pending = review.findings.filter(
+    (f) => (f.status ?? FINDING_STATUS.PENDING) === FINDING_STATUS.PENDING
+  ).length;
+  hint.classList.remove('mobilinho-hidden');
+  hint.textContent = `Medir Score usará a revisão: ${rejected} recusado(s), ${accepted} aceito(s), ${pending} pendente(s).`;
 }
 
 /**
@@ -384,6 +456,7 @@ export function showLoading(stepLabels = []) {
   root.querySelector('#mr-view-results')?.classList.add('mobilinho-hidden');
   root.querySelector('#mr-view-score')?.classList.add('mobilinho-hidden');
   root.querySelector('#mr-view-loading')?.classList.remove('mobilinho-hidden');
+  setNotesPanelMode('none');
 
   const stepsEl = root.querySelector('#mr-steps');
   if (stepsEl) {
@@ -461,7 +534,12 @@ function findingCard(f) {
         <button type="button" class="mobilinho-btn mobilinho-btn--primary" data-finding-action="accept" data-finding-id="${escapeHtml(f.id)}">Aceitar</button>
         <button type="button" class="mobilinho-btn mobilinho-btn--danger" data-finding-action="reject" data-finding-id="${escapeHtml(f.id)}">Recusar</button>
       </div>`
-    : '';
+    : isAccepted
+      ? `<div class="mobilinho-finding-actions">
+        <button type="button" class="mobilinho-btn" data-finding-action="view-line" data-finding-id="${escapeHtml(f.id)}">Ver linha</button>
+        <button type="button" class="mobilinho-btn" data-finding-action="undo-accept" data-finding-id="${escapeHtml(f.id)}">Desfazer aceite</button>
+      </div>`
+      : '';
 
   return `
     <article class="mobilinho-finding mobilinho-finding--${status}" data-finding-id="${escapeHtml(f.id)}">
@@ -572,6 +650,7 @@ export function showError(message) {
 function hideLoading(root) {
   root.querySelector('#mr-view-loading')?.classList.add('mobilinho-hidden');
   root.querySelector('#mr-view-home')?.classList.remove('mobilinho-hidden');
+  setNotesPanelMode('review');
 }
 
 /**
@@ -582,6 +661,7 @@ function showResultsPanel(root) {
   root.querySelector('#mr-view-home')?.classList.add('mobilinho-hidden');
   root.querySelector('#mr-view-score')?.classList.add('mobilinho-hidden');
   root.querySelector('#mr-view-results')?.classList.remove('mobilinho-hidden');
+  setNotesPanelMode('review');
 }
 
 /**
@@ -592,6 +672,7 @@ function showScorePanel(root) {
   root.querySelector('#mr-view-home')?.classList.add('mobilinho-hidden');
   root.querySelector('#mr-view-results')?.classList.add('mobilinho-hidden');
   root.querySelector('#mr-view-score')?.classList.remove('mobilinho-hidden');
+  setNotesPanelMode('score');
 }
 
 function getOverlay() {

@@ -62,6 +62,122 @@ export async function injectCommentDraft(params) {
 }
 
 /**
+ * Remove rascunho preenchido pelo aceitar (reply ou comentário novo na linha).
+ * @param {{ file: string, line: number, text: string }} params
+ * @returns {Promise<{ success: boolean, message: string }>}
+ */
+export async function clearCommentDraft(params) {
+  const file = assertNonEmptyString(params.file, 'file');
+  const line = assertPositiveInteger(params.line, 'line');
+  const text = assertNonEmptyString(params.text, 'text');
+
+  if (lineHasCommentThread(file, line)) {
+    const thread = findThreadForLine(file, line);
+    if (thread) {
+      const cleared = clearDraftInContainer(thread, text);
+      if (cleared) {
+        return {
+          success: true,
+          message: `Rascunho removido na thread da linha ${line}`,
+        };
+      }
+    }
+  }
+
+  const lineCell = findLineElement(file, line);
+  if (lineCell) {
+    const cleared = clearDraftNearLine(lineCell, text);
+    if (cleared) {
+      return {
+        success: true,
+        message: `Rascunho removido na linha ${line}`,
+      };
+    }
+  }
+
+  const fallbackLine = findNextLineWithoutThread(file, line);
+  if (fallbackLine !== null) {
+    const fallbackCell = findLineElement(file, fallbackLine);
+    if (fallbackCell && clearDraftNearLine(fallbackCell, text)) {
+      return {
+        success: true,
+        message: `Rascunho removido na linha ${fallbackLine}`,
+      };
+    }
+  }
+
+  return {
+    success: false,
+    message:
+      'Rascunho não encontrado na página (editor fechado ou texto alterado). Status revertido no painel.',
+  };
+}
+
+/**
+ * @param {Element} container
+ * @param {string} expectedText
+ */
+function clearDraftInContainer(container, expectedText) {
+  for (const textarea of container.querySelectorAll('textarea')) {
+    if (!textareaMatchesDraft(textarea, expectedText)) {
+      continue;
+    }
+    clearTextareaValue(textarea);
+    tryDismissCommentForm(container);
+    return true;
+  }
+  return false;
+}
+
+/**
+ * @param {Element} lineCell
+ * @param {string} expectedText
+ */
+function clearDraftNearLine(lineCell, expectedText) {
+  const row = lineCell.closest('tr.diff-line-row');
+  const scopes = [
+    row,
+    row?.querySelector(GITHUB_SELECTORS.inlineMarkersWrapper),
+    row?.querySelector(GITHUB_SELECTORS.newCommentMarker),
+    lineCell.closest('[id^="diff-"]'),
+  ].filter(Boolean);
+
+  for (const scope of scopes) {
+    if (clearDraftInContainer(scope, expectedText)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * @param {HTMLTextAreaElement} textarea
+ * @param {string} expectedText
+ */
+function textareaMatchesDraft(textarea, expectedText) {
+  const value = textarea.value.trim();
+  const expected = expectedText.trim();
+  if (!value) {
+    return false;
+  }
+  return value === expected || value.startsWith(expected.slice(0, 80));
+}
+
+/**
+ * @param {Element} container
+ */
+function tryDismissCommentForm(container) {
+  const buttons = container.querySelectorAll('button');
+  for (const btn of buttons) {
+    const label = btn.textContent?.trim() ?? '';
+    if (label === 'Cancel' || label === 'Cancelar') {
+      btn.click();
+      return;
+    }
+  }
+}
+
+/**
  * @param {string} file
  * @param {number} line
  * @param {string} text
@@ -201,6 +317,13 @@ function setTextareaValue(textarea, value) {
   textarea.value = value;
   textarea.dispatchEvent(new Event('input', { bubbles: true }));
   textarea.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+/**
+ * @param {HTMLTextAreaElement} textarea
+ */
+function clearTextareaValue(textarea) {
+  setTextareaValue(textarea, '');
 }
 
 /**

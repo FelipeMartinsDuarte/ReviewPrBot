@@ -138,8 +138,14 @@ export function buildReviewUserPayload(ctx) {
  */
 export function buildScoreSystemPrompt(ctx) {
   return `Você é o FelipeDosReview avaliando se um PR deve ser APROVADO ou REPROVADO.
-Considere TODO o código do diff e TODOS os comentários já presentes no PR.
+Considere TODO o código do diff, comentários no PR e a revisão FelipeDosReview já feita neste PR (se fornecida).
 Não armazene estado — esta é uma avaliação pontual.
+
+## Revisão FelipeDosReview anterior (quando houver priorReview)
+- **rejectedFindings (RECUSADOS):** o revisor analisou e **descartou** esses pontos — NÃO conte como bloqueio pendente do PR; respeite o julgamento do revisor.
+- **acceptedFindings (ACEITOS):** o revisor **concordou** — problemas reais se ainda estiverem no diff.
+- **pendingFindings (PENDENTES):** ainda não aceitos nem recusados na UI — trate como abertos.
+- Use stepsSummary como visão geral da revisão já feita.
 
 Retorne SOMENTE JSON válido:
 {
@@ -155,7 +161,20 @@ Retorne SOMENTE JSON válido:
 
 PR: ${ctx.prUrl}
 ${formatReviewerNotes(ctx.userNotes)}
-${formatExternalContext(ctx.externalContext)}`;
+${formatExternalContext(ctx.externalContext)}
+${formatPriorReviewForScore(ctx.priorReviewText)}`;
+}
+
+/**
+ * @param {string} [text]
+ */
+function formatPriorReviewForScore(text) {
+  if (!text?.trim()) {
+    return '';
+  }
+  return `
+## Dados da revisão FelipeDosReview neste PR (JSON)
+${text.trim()}`;
 }
 
 /**

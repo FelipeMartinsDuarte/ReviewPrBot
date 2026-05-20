@@ -15,6 +15,10 @@ import {
 import { LIMITS } from '../shared/limits.js';
 import { assertArray, isPlainObject } from '../shared/validators.js';
 import { FINDING_CATEGORIES, FINDING_STATUS } from '../shared/constants.js';
+import {
+  buildReviewContextForScore,
+  stringifyReviewContextForScore,
+} from '../shared/review-for-score.js';
 
 /**
  * @param {object} prData
@@ -79,14 +83,22 @@ Reescreva cada githubComment seguindo o estilo humano/técnico definido no promp
  * @param {object} prData
  * @param {string} [userNotes]
  */
-export async function runScore(prData, userNotes = '', externalContext = '') {
+export async function runScore(
+  prData,
+  userNotes = '',
+  externalContext = '',
+  priorReview = null
+) {
   const release = acquireOperation('score');
 
   try {
     const credentials = await getCredentials();
     const safe = preparePrPayload(prData, userNotes, externalContext);
+    const priorReviewCtx = buildReviewContextForScore(priorReview);
 
     assertCallBudget(0, LIMITS.MAX_OPENAI_CALLS_PER_SCORE, 'score');
+
+    const priorReviewText = stringifyReviewContextForScore(priorReviewCtx);
 
     return chatJsonCompletion({
       apiKey: credentials.apiKey,
@@ -97,6 +109,7 @@ export async function runScore(prData, userNotes = '', externalContext = '') {
         existingComments: safe.existingComments,
         userNotes: safe.userNotes,
         externalContext: safe.externalContext,
+        priorReviewText,
       }),
       userContent: JSON.stringify({
         files: safe.compactFiles,
@@ -104,6 +117,7 @@ export async function runScore(prData, userNotes = '', externalContext = '') {
         stats: safe.stats,
         userNotes: safe.userNotes || undefined,
         externalContextFromOtherReview: safe.externalContext || undefined,
+        priorReviewFromFelipeDosReview: priorReviewCtx ?? undefined,
       }),
       maxOutputTokens: LIMITS.MAX_OUTPUT_TOKENS_SCORE,
     });

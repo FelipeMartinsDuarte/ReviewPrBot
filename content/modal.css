@@ -68,9 +68,56 @@
   padding: 16px 24px;
   border-top: 1px solid var(--mr-border);
   display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--mr-surface);
+}
+
+.mobilinho-footer-action-row {
+  display: flex;
   gap: 10px;
   flex-wrap: wrap;
-  background: var(--mr-surface);
+}
+
+.mobilinho-notes-panel {
+  width: 100%;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--mr-border);
+}
+
+.mobilinho-notes-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 0;
+  border: none;
+  background: transparent;
+  color: var(--mr-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+}
+
+.mobilinho-notes-toggle:hover {
+  color: var(--mr-text);
+}
+
+.mobilinho-notes-toggle-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--mr-text);
+}
+
+.mobilinho-notes-body {
+  padding-top: 4px;
+}
+
+.mobilinho-textarea--compact {
+  min-height: 56px;
+  max-height: 100px;
 }
 
 .mobilinho-btn {

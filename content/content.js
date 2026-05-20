@@ -6,7 +6,10 @@ import {
   getPrUrl,
   scrollToDiffLine,
 } from './github-scraper.js';
-import { injectCommentDraft } from './github-comment-injector.js';
+import {
+  injectCommentDraft,
+  clearCommentDraft,
+} from './github-comment-injector.js';
 import { preparePrReviewDraft } from './github-pr-review.js';
 import {
   openModal,
@@ -19,6 +22,7 @@ import {
   setAttachFileLabel,
   setIncludeExternalChecked,
   isBitrixSendSoChecked,
+  updateScoreReviewHint,
 } from './modal.js';
 import { getPullRequestUrl } from '../shared/pr-url.js';
 import {
@@ -220,7 +224,33 @@ async function openReviewerModal() {
       if (action === 'reject') {
         setFindingStatus(findingId, FINDING_STATUS.REJECTED);
         renderReviewResults(lastReview);
+        updateScoreReviewHint(lastReview);
         await persistReview();
+        return;
+      }
+      if (action === 'undo-accept') {
+        const finding = findFinding(findingId);
+        if (!finding) {
+          showError('Achado não encontrado');
+          return;
+        }
+        closeModal();
+        await delay(200);
+        const clearRes = await clearCommentDraft({
+          file: finding.file,
+          line: finding.line,
+          text: finding.githubComment,
+        });
+        setFindingStatus(findingId, FINDING_STATUS.PENDING);
+        await persistReview();
+        await openReviewerModal();
+        if (lastReview) {
+          renderReviewResults(lastReview);
+          updateScoreReviewHint(lastReview);
+        }
+        if (!clearRes.success) {
+          showError(clearRes.message);
+        }
         return;
       }
       if (action === 'accept') {
@@ -240,6 +270,7 @@ async function openReviewerModal() {
         }
         setFindingStatus(findingId, FINDING_STATUS.ACCEPTED);
         renderReviewResults(lastReview);
+        updateScoreReviewHint(lastReview);
         await persistReview();
       }
     },
@@ -252,9 +283,11 @@ async function openReviewerModal() {
 
   if (lastReview) {
     renderReviewResults(lastReview);
+    updateScoreReviewHint(lastReview);
   }
   if (lastScore) {
     renderScoreResults(lastScore, bitrixSendSo);
+    updateScoreReviewHint(lastReview);
   }
 }
 
@@ -320,6 +353,7 @@ async function runReviewFlow(userNotes, externalContext = '') {
     lastReview = result.review;
     await persistReview();
     renderReviewResults(lastReview);
+    updateScoreReviewHint(lastReview);
   } catch (err) {
     showError(err instanceof Error ? err.message : String(err));
   } finally {
@@ -343,6 +377,7 @@ async function runScoreFlow(userNotes, externalContext = '') {
       prData,
       userNotes,
       externalContext,
+      priorReview: lastReview,
     });
 
     if (!result?.ok) {
@@ -354,6 +389,7 @@ async function runScoreFlow(userNotes, externalContext = '') {
       type: MESSAGE_TYPES.GET_BITRIX_SEND_SO,
     });
     renderScoreResults(lastScore, Boolean(bitrixRes?.enabled));
+    updateScoreReviewHint(lastReview);
   } catch (err) {
     showError(err instanceof Error ? err.message : String(err));
   } finally {

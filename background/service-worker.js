@@ -77,7 +77,15 @@ async function handleMessage(message) {
         typeof message.externalContext === 'string'
           ? message.externalContext
           : '';
-      const score = await runScore(prData, userNotes, externalContext);
+      const priorReview = isPlainObject(message.priorReview)
+        ? message.priorReview
+        : null;
+      const score = await runScore(
+        prData,
+        userNotes,
+        externalContext,
+        priorReview
+      );
       return { ok: true, score };
     }
 
